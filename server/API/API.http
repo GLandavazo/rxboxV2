@@ -1,0 +1,71 @@
+### RxBox API — requests de ejemplo
+### VS Code (extensión REST Client / "HTTP") y Rider ejecutan este archivo.
+### Cambia @host al puerto donde corras la API (5080 con `dotnet run`).
+### La colección completa está en docs/postman/RxBox.postman_collection.json.
+
+@host = http://localhost:5080
+@contentType = application/json
+
+### Health — no requiere autenticación
+GET {{host}}/health
+Accept: {{contentType}}
+
+### Swagger JSON (solo en Development)
+GET {{host}}/swagger/v1/swagger.json
+Accept: {{contentType}}
+
+
+### ─────────────────────────────────────────────────────────────────────────
+###  Auth
+### ─────────────────────────────────────────────────────────────────────────
+
+### Login — un box: tokens. Varios: requiereSeleccion, boxes y selectionToken.
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@rxbox.local",
+  "password": "cambia-esto"
+}
+
+###
+@token = {{login.response.body.$.accessToken}}
+@refreshToken = {{login.response.body.$.refreshToken}}
+@selectionToken = {{login.response.body.$.selectionToken}}
+@boxPublicId = {{login.response.body.$.boxes[0].publicId}}
+
+### Seleccionar box (tras un login con varios boxes)
+POST {{host}}/api/auth/seleccionar-box
+Content-Type: {{contentType}}
+
+{
+  "selectionToken": "{{selectionToken}}",
+  "boxPublicId": "{{boxPublicId}}"
+}
+
+### Cambiar de box sin pedir contraseña
+POST {{host}}/api/auth/cambiar-box
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "boxPublicId": "{{boxPublicId}}"
+}
+
+### Refresh — rota el refresh token
+POST {{host}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout — revoca el refresh token
+POST {{host}}/api/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}

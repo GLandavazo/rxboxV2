@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="API/RxBox.API.csproj" />
+  <Project Path="Core/RxBox.Core.csproj" />
+  <Project Path="Infrastructure/RxBox.Infrastructure.csproj" />
+  <Project Path="Tests/RxBox.Tests.csproj" />
+</Solution>
