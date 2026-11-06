@@ -1,0 +1,530 @@
+{
+  "info": {
+    "name": "RxBox API",
+    "description": "Colección de RxBox v2. Usa el environment 'RxBox Local'. Login guarda los tokens automáticamente.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Un box activo: requiereSeleccion=false, accessToken, refreshToken, accessExpiraEn. Varios: requiereSeleccion=true, boxes y selectionToken (5 min). 401: credenciales inválidas. 403: sin box activo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = r.data ?? r;",
+                  "if (d.accessToken) pm.environment.set('accessToken', d.accessToken);",
+                  "if (d.refreshToken) pm.environment.set('refreshToken', d.refreshToken);",
+                  "if (d.selectionToken) pm.environment.set('selectionToken', d.selectionToken);",
+                  "if (d.boxes && d.boxes.length) pm.environment.set('boxPublicId', d.boxes[0].publicId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seleccionar box",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/seleccionar-box",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "seleccionar-box"
+              ]
+            },
+            "description": "selectionToken + boxPublicId. 200: accessToken, refreshToken, accessExpiraEn. 401: token inválido o expirado. 403: el usuario no pertenece a ese box.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"selectionToken\": \"{{selectionToken}}\",\n  \"boxPublicId\": \"{{boxPublicId}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = r.data ?? r;",
+                  "if (d.accessToken) pm.environment.set('accessToken', d.accessToken);",
+                  "if (d.refreshToken) pm.environment.set('refreshToken', d.refreshToken);",
+                  "if (d.selectionToken) pm.environment.set('selectionToken', d.selectionToken);",
+                  "if (d.boxes && d.boxes.length) pm.environment.set('boxPublicId', d.boxes[0].publicId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cambiar box",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/cambiar-box",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "cambiar-box"
+              ]
+            },
+            "description": "Autenticado. Tokens nuevos para otro box del usuario, sin pedir contraseña. 200: accessToken, refreshToken, accessExpiraEn. 403: el usuario no pertenece a ese box.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boxPublicId\": \"{{boxPublicId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = r.data ?? r;",
+                  "if (d.accessToken) pm.environment.set('accessToken', d.accessToken);",
+                  "if (d.refreshToken) pm.environment.set('refreshToken', d.refreshToken);",
+                  "if (d.selectionToken) pm.environment.set('selectionToken', d.selectionToken);",
+                  "if (d.boxes && d.boxes.length) pm.environment.set('boxPublicId', d.boxes[0].publicId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Rota el refresh token. 200: accessToken, refreshToken, accessExpiraEn. 401: inválido, expirado o ya usado; reusar uno rotado revoca la sesión del usuario en ese box.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = r.data ?? r;",
+                  "if (d.accessToken) pm.environment.set('accessToken', d.accessToken);",
+                  "if (d.refreshToken) pm.environment.set('refreshToken', d.refreshToken);",
+                  "if (d.selectionToken) pm.environment.set('selectionToken', d.selectionToken);",
+                  "if (d.boxes && d.boxes.length) pm.environment.set('boxPublicId', d.boxes[0].publicId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Autenticado. Revoca el refresh token. 204 sin cuerpo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.unset('accessToken'); pm.environment.unset('refreshToken');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Catálogos fijos",
+      "item": [
+        {
+          "name": "Nombres",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos-fijos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalogos-fijos"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Tipos de cobertura",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos-fijos/tipos-cobertura",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalogos-fijos",
+                "tipos-cobertura"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Catálogo inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos-fijos/no-existe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalogos-fijos",
+                "no-existe"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catálogos",
+      "item": [
+        {
+          "name": "Listar métodos de pago",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos?tipo=METODO_PAGO&soloActivos=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalogos"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "METODO_PAGO"
+                },
+                {
+                  "key": "soloActivos",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Listar todos (incluye inactivos)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos?soloActivos=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalogos"
+              ],
+              "query": [
+                {
+                  "key": "soloActivos",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Obtener",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos/{{catalogoPublicId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalogos",
+                "{{catalogoPublicId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Agregar método de pago",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalogos"
+              ]
+            },
+            "description": "Guarda catalogoPublicId para Obtener, Editar y Activar-desactivar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"METODO_PAGO\",\n  \"nombre\": \"Mercado Pago\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) { pm.environment.set('catalogoPublicId', pm.response.json().publicId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Agregar categoría",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalogos"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"CATEGORIA_MEMBRESIA\",\n  \"nombre\": \"Héroe\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) { pm.environment.set('catalogoPublicId', pm.response.json().publicId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Editar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos/{{catalogoPublicId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalogos",
+                "{{catalogoPublicId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Mercado Pago QR\",\n  \"orden\": 4\n}"
+            }
+          }
+        },
+        {
+          "name": "Activar-desactivar",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalogos/{{catalogoPublicId}}/toggle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalogos",
+                "{{catalogoPublicId}}",
+                "toggle"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    }
+  ]
+}
