@@ -28,4 +28,6 @@ Cada etapa (listado, agregar, editar, eliminar lógico) sigue los mismos pasos y
 
 | # | Archivo | Estado |
 |---|---|---|
-| 01 | [01-catalogos.md](01-catalogos.md) | Listo para implementar |
+| 00 | [00-transversal.md](00-transversal.md) | Listo para implementar |
+| 01 | [01-catalogos.md](01-catalogos.md) | Construido |
+| 02 | [02-personas.md](02-personas.md) | Listo para implementar (requiere 00) |

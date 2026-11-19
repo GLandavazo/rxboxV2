@@ -33,6 +33,9 @@ namespace RxBox.Infrastructure.Data
         public DbSet<ClaseProgramacionDia> ClaseProgramacionDias { get; set; }
         public DbSet<Clase> Clases { get; set; }
         public DbSet<Inscripcion> Inscripciones { get; set; }
+        public DbSet<Bitacora> Bitacora { get; set; }
+        public DbSet<MembresiaEvento> MembresiaEventos { get; set; }
+
 
         // El query filter lo evalúa en cada consulta. Sin box actual no regresa filas.
         private int? BoxIdActual => _currentUser.BoxId;

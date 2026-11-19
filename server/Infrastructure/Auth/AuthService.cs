@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RxBox.Core.DTOs.Requests.Auth;
@@ -8,6 +7,8 @@ using RxBox.Core.Enums;
 using RxBox.Core.Exceptions;
 using RxBox.Core.Interfaces;
 using RxBox.Infrastructure.Data;
+using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace RxBox.Infrastructure.Auth
 {
@@ -38,7 +39,7 @@ namespace RxBox.Infrastructure.Auth
                     SelectionToken = tokens.CrearSelectionToken(usuario.Id)
                 };
 
-            var emitidos = await EmitirTokensAsync(usuario.Id, boxes[0], ct);
+            var emitidos = await EmitirTokensAsync(usuario.Id, boxes[0], ,ct);
             return new LoginResponse
             {
                 AccessToken = emitidos.AccessToken,
@@ -52,11 +53,11 @@ namespace RxBox.Infrastructure.Auth
             var usuarioId = await tokens.ValidarSelectionTokenAsync(request.SelectionToken)
                 ?? throw new UnauthenticatedException("El token de selección no es válido o expiró.");
 
-            return await EmitirParaBoxAsync(usuarioId, request.BoxPublicId, ct);
+            return await EmitirParaBoxAsync(usuarioId, request.BoxPublicId, AccionBitacora.LOGIN, ct);
         }
 
         public Task<TokensResponse> CambiarBoxAsync(CambiarBoxRequest request, CancellationToken ct = default) =>
-            EmitirParaBoxAsync(currentUser.UsuarioId!.Value, request.BoxPublicId, ct);
+                EmitirParaBoxAsync(currentUser.UsuarioId!.Value, request.BoxPublicId, AccionBitacora.CAMBIO_BOX, ct);
 
         public async Task<TokensResponse> RefreshAsync(RefreshRequest request, CancellationToken ct = default)
         {
@@ -85,7 +86,7 @@ namespace RxBox.Infrastructure.Auth
             var box = await BoxesActivos(token.UsuarioId).Where(ub => ub.BoxId == token.BoxId).Select(ADeUsuario).FirstOrDefaultAsync(ct)
                 ?? throw RefreshInvalido();
 
-            return await EmitirTokensAsync(token.UsuarioId, box, ct);
+            return await EmitirTokensAsync(token.UsuarioId, box, acceso: null, ct);
         }
 
         public async Task LogoutAsync(LogoutRequest request, CancellationToken ct = default)
@@ -105,14 +106,19 @@ namespace RxBox.Infrastructure.Auth
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == email && u.Activo, ct);
 
             if (usuario is null)
-            {
+            {   
                 hasher.VerifyHashedPassword(new Usuario(), HashFicticio, request.Password);
+                await RegistrarLoginFallidoAsync(null, email, ct);
                 throw CredencialesInvalidas();
             }
 
             var verificacion = hasher.VerifyHashedPassword(usuario, usuario.PasswordHash, request.Password);
             if (verificacion == PasswordVerificationResult.Failed)
+            {
+                await RegistrarLoginFallidoAsync(usuario.Id, email, ct);
                 throw CredencialesInvalidas();
+            }
+
 
             // ExecuteUpdate para no ensuciar la auditoría: iniciar sesión no es editar el usuario.
             var hash = verificacion == PasswordVerificationResult.SuccessRehashNeeded
@@ -135,7 +141,8 @@ namespace RxBox.Infrastructure.Auth
             return await EmitirTokensAsync(usuarioId, box, ct);
         }
 
-        private async Task<TokensResponse> EmitirTokensAsync(int usuarioId, BoxDeUsuario box, CancellationToken ct)
+        private async Task<TokensResponse> EmitirTokensAsync(
+    int usuarioId, BoxDeUsuario box, AccionBitacora? acceso, CancellationToken ct)
         {
             var (accessToken, accessExpiraEn) = tokens.CrearAccessToken(usuarioId, box.BoxId, box.Rol);
             var (refreshToken, hash, refreshExpiraEn) = tokens.CrearRefreshToken();
@@ -147,10 +154,22 @@ namespace RxBox.Infrastructure.Auth
                 TokenHash = hash,
                 ExpiraEn = refreshExpiraEn
             });
-            await db.SaveChangesAsync(ct);
+            if (acceso is not null) RegistrarAcceso(acceso.Value, usuarioId, box.BoxId);
+
+            await db.SaveChangesAsync(ct);   // token y bitácora juntos
 
             return new TokensResponse(accessToken, refreshToken, accessExpiraEn);
         }
+
+        private async Task<TokensResponse> EmitirParaBoxAsync(
+            int usuarioId, Guid boxPublicId, AccionBitacora acceso, CancellationToken ct)
+        {
+            var box = await BoxesActivos(usuarioId).Where(ub => ub.Box.PublicId == boxPublicId).Select(ADeUsuario).FirstOrDefaultAsync(ct)
+                ?? throw new UnauthorizedAccessException("No tienes acceso a ese box.");
+
+            return await EmitirTokensAsync(usuarioId, box, acceso, ct);
+        }
+
 
         private IQueryable<UsuarioBox> BoxesActivos(int usuarioId) =>
             db.UsuarioBoxes.AsNoTracking()
@@ -167,5 +186,24 @@ namespace RxBox.Infrastructure.Auth
             ub => new BoxDeUsuario(ub.BoxId, ub.Box.PublicId, ub.Box.Nombre, ub.Rol);
 
         private sealed record BoxDeUsuario(int BoxId, Guid PublicId, string Nombre, RolUsuario Rol);
+
+        // Auth escribe la bitácora directo: login y cambio de box no son ediciones de una entidad.
+        private void RegistrarAcceso(AccionBitacora accion, int? usuarioId, int? boxId, object? datos = null) =>
+            db.Bitacora.Add(new Bitacora
+            {
+                BoxId = boxId,
+                UsuarioId = usuarioId,
+                Entidad = nameof(Usuario),
+                Accion = accion,
+                Cambios = datos is null ? null : JsonSerializer.Serialize(datos),
+                Ip = currentUser.Ip
+            });
+
+        private async Task RegistrarLoginFallidoAsync(int? usuarioId, string email, CancellationToken ct)
+        {
+            RegistrarAcceso(AccionBitacora.LOGIN_FALLIDO, usuarioId, boxId: null, new { email });
+            await db.SaveChangesAsync(ct);
+        }
+
     }
 }

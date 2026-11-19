@@ -11,5 +11,8 @@ namespace RxBox.Core.Interfaces
         int? BoxId { get; }       // claim "box_id"
         string? Rol { get; }      // claim "rol"
         bool IsAuthenticated { get; }
+
+        string? Ip { get; }
+
     }
 }

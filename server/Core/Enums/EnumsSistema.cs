@@ -1,9 +1,11 @@
+using System.ComponentModel;
+
 namespace RxBox.Core.Enums
 {
     public enum TipoCatalogo
     {
-        CATEGORIA_MEMBRESIA,
-        METODO_PAGO
+        [Description("Categoría de membresía")] CATEGORIA_MEMBRESIA,
+        [Description("Método de pago")] METODO_PAGO
     }
 
     public enum TipoCobertura
@@ -43,6 +45,27 @@ namespace RxBox.Core.Enums
     {
         COACH,
         PORTAL,
-        QR
+        [Description("QR")] QR
     }
+
+    public enum AccionBitacora
+    {
+        CREAR,
+        EDITAR,
+        ELIMINAR,
+        LOGIN,
+        [Description("Login fallido")] LOGIN_FALLIDO,
+        [Description("Cambio de box")] CAMBIO_BOX
+    }
+
+    public enum TipoEventoMembresia
+    {
+        ALTA,
+        [Description("Renovación")] RENOVACION,
+        PAGO,
+        [Description("Pago anulado")] PAGO_ANULADO,
+        [Description("Extensión")] EXTENSION,
+        [Description("Cancelación")] CANCELACION
+    }
+
 }

@@ -20,9 +20,9 @@ Los módulos de operación (membresías, pagos, inscripciones) tienen sus propia
 
 | # | Módulo | Prefijo RF | Estado |
 |---|---|---|---|
-| 00 | Transversal: bitácora, eventos de membresía | RF-TRV | Por construir. El esquema los define pero la migración inicial no creó `bitacora`, `membresia_eventos` ni `membresias.membresia_anterior_id`. Debe quedar antes del módulo 04. |
-| 01 | [Catálogos](01-catalogos.md) (fijos y editables) | RF-CAF / RF-CAT | Definido |
-| 02 | Personas (atletas, coaches) y contactos de emergencia | RF-PER | Por definir |
+| 00 | [Transversal](00-transversal.md): bitácora, accesos, historial de membresías | RF-TRV | Definido |
+| 01 | [Catálogos](01-catalogos.md) (fijos y editables) | RF-CAF / RF-CAT | Construido (falta enums como texto en JSON; va en el paso 0 del 00) |
+| 02 | [Personas](02-personas.md) (atletas, coaches) y contactos de emergencia | RF-PER / RF-CEM | Definido |
 | 03 | Tipos de membresía y restricciones | RF-TME | Por definir |
 | 04 | Membresías (venta, renovación, extensión, cancelación) | RF-MEM | Por definir |
 | 05 | Pagos | RF-PAG | Por definir |

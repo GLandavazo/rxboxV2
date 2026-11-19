@@ -1,4 +1,3 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +11,9 @@ using RxBox.Infrastructure.Data;
 using RxBox.Infrastructure.Data.Interceptors;
 using RxBox.Infrastructure.Data.Seed;
 using RxBox.Infrastructure.Repositories;
+using RxBox.Infrastructure.Services.Auditoria;
+using RxBox.Infrastructure.Services.Catalogos;
+using System.Text;
 
 namespace RxBox.API.Extensions
 {
@@ -46,6 +48,9 @@ namespace RxBox.API.Extensions
         {
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICatalogoSeedService, CatalogoSeedService>();
+            services.AddScoped<ICatalogoService, CatalogoService>();
+            services.AddSingleton<ICatalogoFijoService, CatalogoFijoService>();
+            services.AddScoped<IBitacoraService, BitacoraService>();
             return services;
         }
 

@@ -24,5 +24,9 @@ namespace RxBox.Core.Entities
         public DateTimeOffset? CanceladaEn { get; set; }
         public int? CanceladaPor { get; set; }
         public string? Notas { get; set; }
+
+        /// <summary>La membresía que esta renueva. Arma la cadena de renovaciones.</summary>
+        public int? MembresiaAnteriorId { get; set; }
+
     }
 }

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 using RxBox.Core.Entities;
 using RxBox.Core.Enums;
 using RxBox.Infrastructure.Data;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Text.Json;
 using Testcontainers.PostgreSql;
 
 namespace RxBox.Tests
@@ -52,6 +55,19 @@ namespace RxBox.Tests
                 ["Seed:AdminPassword"] = SeedPassword
             }));
         }
+
+        /// <summary>HttpClient con el access token de un usuario de un solo box.</summary>
+        public async Task<HttpClient> CrearClienteAsync(Usuario usuario)
+        {
+            var client = CreateClient();
+            var login = await client.PostAsJsonAsync("/api/auth/login", new { email = usuario.Email, password = Password });
+            login.EnsureSuccessStatusCode();
+
+            var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return client;
+        }
+
 
         public async Task<Box> CrearBoxAsync(bool activo = true)
         {

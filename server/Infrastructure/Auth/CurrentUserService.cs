@@ -22,5 +22,7 @@ namespace RxBox.Infrastructure.Auth
         public string? Rol => User?.FindFirstValue(JwtTokenService.ClaimRol);
 
         public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
+        public string? Ip => httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+
     }
 }

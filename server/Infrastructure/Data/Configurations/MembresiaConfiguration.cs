@@ -19,6 +19,9 @@ namespace RxBox.Infrastructure.Data.Configurations
             builder.HasIndex(m => new { m.BoxId, m.FechaFin });
 
             builder.HasTenantFk<Persona>(nameof(Membresia.PersonaId));
+            // Una membresía solo se renueva una vez.
+            builder.HasIndex(m => m.MembresiaAnteriorId).IsUnique()
+                .HasFilter("membresia_anterior_id IS NOT NULL");
             builder.HasTenantFk<Persona>(nameof(Membresia.PersonaVinculadaId));
             builder.HasTenantFk<TipoMembresia>(nameof(Membresia.TipoMembresiaId));
             builder.HasUsuarioFk(nameof(Membresia.CanceladaPor));

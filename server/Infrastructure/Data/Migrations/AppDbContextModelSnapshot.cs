@@ -22,6 +22,61 @@ namespace RxBox.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("RxBox.Core.Entities.Bitacora", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("accion");
+
+                    b.Property<int?>("BoxId")
+                        .HasColumnType("integer")
+                        .HasColumnName("box_id");
+
+                    b.Property<string>("Cambios")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("cambios");
+
+                    b.Property<string>("Entidad")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("entidad");
+
+                    b.Property<Guid?>("EntidadPublicId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entidad_public_id");
+
+                    b.Property<DateTimeOffset>("Fecha")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha");
+
+                    b.Property<string>("Ip")
+                        .HasColumnType("text")
+                        .HasColumnName("ip");
+
+                    b.Property<int?>("UsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoxId", "Fecha");
+
+                    b.HasIndex("BoxId", "Entidad", "EntidadPublicId");
+
+                    b.ToTable("bitacora", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_bitacora_accion", "accion IN ('CREAR', 'EDITAR', 'ELIMINAR', 'LOGIN', 'LOGIN_FALLIDO', 'CAMBIO_BOX')");
+                        });
+                });
+
             modelBuilder.Entity("RxBox.Core.Entities.Box", b =>
                 {
                     b.Property<int>("Id")
@@ -601,6 +656,10 @@ namespace RxBox.Infrastructure.Data.Migrations
                         .HasColumnType("date")
                         .HasColumnName("fecha_inicio");
 
+                    b.Property<int?>("MembresiaAnteriorId")
+                        .HasColumnType("integer")
+                        .HasColumnName("membresia_anterior_id");
+
                     b.Property<decimal>("Monto")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)")
@@ -644,6 +703,10 @@ namespace RxBox.Infrastructure.Data.Migrations
 
                     b.HasIndex("CanceladaPor");
 
+                    b.HasIndex("MembresiaAnteriorId")
+                        .IsUnique()
+                        .HasFilter("membresia_anterior_id IS NOT NULL");
+
                     b.HasIndex("PublicId")
                         .IsUnique();
 
@@ -658,6 +721,69 @@ namespace RxBox.Infrastructure.Data.Migrations
                     b.ToTable("membresias", null, t =>
                         {
                             t.HasCheckConstraint("ck_membresias_tipo_cobertura", "tipo_cobertura IN ('ILIMITADA', 'PAQUETE', 'VISITA')");
+                        });
+                });
+
+            modelBuilder.Entity("RxBox.Core.Entities.MembresiaEvento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BoxId")
+                        .HasColumnType("integer")
+                        .HasColumnName("box_id");
+
+                    b.Property<string>("Datos")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("datos");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("descripcion");
+
+                    b.Property<DateTimeOffset>("Fecha")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha");
+
+                    b.Property<int>("MembresiaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("membresia_id");
+
+                    b.Property<int?>("PagoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("pago_id");
+
+                    b.Property<int>("PersonaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("persona_id");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tipo");
+
+                    b.Property<int?>("UsuarioId")
+                        .HasColumnType("integer")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("BoxId", "PagoId");
+
+                    b.HasIndex("BoxId", "MembresiaId", "Fecha");
+
+                    b.HasIndex("BoxId", "PersonaId", "Fecha");
+
+                    b.ToTable("membresia_eventos", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_membresia_eventos_tipo", "tipo IN ('ALTA', 'RENOVACION', 'PAGO', 'PAGO_ANULADO', 'EXTENSION', 'CANCELACION')");
                         });
                 });
 
@@ -1291,6 +1417,40 @@ namespace RxBox.Infrastructure.Data.Migrations
                         .HasForeignKey("BoxId", "TipoMembresiaId")
                         .HasPrincipalKey("BoxId", "Id")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("RxBox.Core.Entities.MembresiaEvento", b =>
+                {
+                    b.HasOne("RxBox.Core.Entities.Box", null)
+                        .WithMany()
+                        .HasForeignKey("BoxId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RxBox.Core.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RxBox.Core.Entities.Membresia", null)
+                        .WithMany()
+                        .HasForeignKey("BoxId", "MembresiaId")
+                        .HasPrincipalKey("BoxId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RxBox.Core.Entities.Pago", null)
+                        .WithMany()
+                        .HasForeignKey("BoxId", "PagoId")
+                        .HasPrincipalKey("BoxId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RxBox.Core.Entities.Persona", null)
+                        .WithMany()
+                        .HasForeignKey("BoxId", "PersonaId")
+                        .HasPrincipalKey("BoxId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RxBox.Core.Entities.Pago", b =>

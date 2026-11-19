@@ -525,6 +525,383 @@
           }
         }
       ]
+    },
+    {
+      "name": "Bitácora",
+      "item": [
+        {
+          "name": "Últimos movimientos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bitacora?pagina=1&tamano=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bitacora"
+              ],
+              "query": [
+                {
+                  "key": "pagina",
+                  "value": "1"
+                },
+                {
+                  "key": "tamano",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Historial de un registro",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bitacora?entidadPublicId={{catalogoPublicId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bitacora"
+              ],
+              "query": [
+                {
+                  "key": "entidadPublicId",
+                  "value": "{{catalogoPublicId}}"
+                }
+              ]
+            },
+            "description": "Cambia la variable por el publicId de cualquier registro (persona, catálogo…)."
+          }
+        },
+        {
+          "name": "Accesos de hoy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bitacora?entidad=Usuario&desde=2026-11-06&hasta=2026-11-06",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bitacora"
+              ],
+              "query": [
+                {
+                  "key": "entidad",
+                  "value": "Usuario"
+                },
+                {
+                  "key": "desde",
+                  "value": "2026-11-06"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-11-06"
+                }
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "Personas",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas?buscar=&soloActivos=true&pagina=1&tamano=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas"
+              ],
+              "query": [
+                {
+                  "key": "buscar",
+                  "value": ""
+                },
+                {
+                  "key": "soloActivos",
+                  "value": "true"
+                },
+                {
+                  "key": "pagina",
+                  "value": "1"
+                },
+                {
+                  "key": "tamano",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Listar coaches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas?tipo=COACH",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "COACH"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Detalle",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/{{personaPublicId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "{{personaPublicId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Agregar atleta con contacto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas"
+              ]
+            },
+            "description": "Guarda personaPublicId y contactoPublicId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellidos\": \"López García\",\n  \"email\": \"ana@correo.com\",\n  \"telefono\": \"6621234567\",\n  \"esAtleta\": true,\n  \"esCoach\": false,\n  \"contactos\": [\n    {\n      \"nombre\": \"Luis López\",\n      \"parentesco\": \"Esposo\",\n      \"telefono\": \"6627654321\"\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) { const p = pm.response.json(); pm.environment.set('personaPublicId', p.publicId); if (p.contactos && p.contactos.length) pm.environment.set('contactoPublicId', p.contactos[0].publicId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Agregar sin rol (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellidos\": \"López\",\n  \"esAtleta\": false,\n  \"esCoach\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Editar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/{{personaPublicId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "{{personaPublicId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana María\",\n  \"apellidos\": \"López García\",\n  \"email\": \"ana@correo.com\",\n  \"telefono\": \"6621234567\",\n  \"esAtleta\": true,\n  \"esCoach\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Activar-desactivar",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/{{personaPublicId}}/toggle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "{{personaPublicId}}",
+                "toggle"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Agregar contacto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/{{personaPublicId}}/contactos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "{{personaPublicId}}",
+                "contactos"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Marta García\",\n  \"parentesco\": \"Madre\",\n  \"telefono\": \"6620000000\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) { pm.environment.set('contactoPublicId', pm.response.json().publicId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Editar contacto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/{{personaPublicId}}/contactos/{{contactoPublicId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "{{personaPublicId}}",
+                "contactos",
+                "{{contactoPublicId}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Marta García\",\n  \"parentesco\": \"Mamá\",\n  \"telefono\": \"6620000001\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar contacto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/{{personaPublicId}}/contactos/{{contactoPublicId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "{{personaPublicId}}",
+                "contactos",
+                "{{contactoPublicId}}"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
     }
   ]
 }

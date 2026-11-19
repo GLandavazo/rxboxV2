@@ -2,6 +2,7 @@ using Microsoft.OpenApi.Models;
 using RxBox.API.Extensions;
 using RxBox.API.Middleware;
 using Serilog;
+using System.Text.Json.Serialization;
 
 // Logger de arranque: captura fallos que ocurren antes de construir el host.
 Log.Logger = new LoggerConfiguration()
@@ -21,7 +22,9 @@ try
         .ReadFrom.Services(services)
         .Enrich.FromLogContext());
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(
+        new JsonStringEnumConverter(allowIntegerValues: false)));
     builder.Services.AddDatabase(builder.Configuration);
     builder.Services.AddRepositories();
     builder.Services.AddAppServices();
