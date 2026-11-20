@@ -131,5 +131,16 @@ namespace RxBox.Tests
             accion(db);
             await db.SaveChangesAsync();
         }
+
+        /// <summary>Usuario con rol COACH en el box.</summary>
+        public async Task<Usuario> CrearCoachAsync(Box box)
+        {
+            var usuario = await CrearUsuarioAsync(box);
+            await EnDbAsync(db => db.UsuarioBoxes
+                .Single(ub => ub.UsuarioId == usuario.Id && ub.BoxId == box.Id)
+                .Rol = RolUsuario.COACH);
+            return usuario;
+        }
+
     }
 }

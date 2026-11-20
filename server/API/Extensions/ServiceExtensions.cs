@@ -13,6 +13,7 @@ using RxBox.Infrastructure.Data.Seed;
 using RxBox.Infrastructure.Repositories;
 using RxBox.Infrastructure.Services.Auditoria;
 using RxBox.Infrastructure.Services.Catalogos;
+using RxBox.Infrastructure.Services.Personas;
 using System.Text;
 
 namespace RxBox.API.Extensions
@@ -51,6 +52,8 @@ namespace RxBox.API.Extensions
             services.AddScoped<ICatalogoService, CatalogoService>();
             services.AddSingleton<ICatalogoFijoService, CatalogoFijoService>();
             services.AddScoped<IBitacoraService, BitacoraService>();
+            services.AddScoped<IPersonaService, PersonaService>();
+
             return services;
         }
 

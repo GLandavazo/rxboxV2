@@ -39,7 +39,7 @@ namespace RxBox.Infrastructure.Auth
                     SelectionToken = tokens.CrearSelectionToken(usuario.Id)
                 };
 
-            var emitidos = await EmitirTokensAsync(usuario.Id, boxes[0], ,ct);
+            var emitidos = await EmitirTokensAsync(usuario.Id, boxes[0], AccionBitacora.LOGIN, ct);
             return new LoginResponse
             {
                 AccessToken = emitidos.AccessToken,
@@ -133,12 +133,13 @@ namespace RxBox.Infrastructure.Auth
             return usuario;
         }
 
-        private async Task<TokensResponse> EmitirParaBoxAsync(int usuarioId, Guid boxPublicId, CancellationToken ct)
+        private async Task<TokensResponse> EmitirParaBoxAsync(
+            int usuarioId, Guid boxPublicId, AccionBitacora acceso, CancellationToken ct)
         {
             var box = await BoxesActivos(usuarioId).Where(ub => ub.Box.PublicId == boxPublicId).Select(ADeUsuario).FirstOrDefaultAsync(ct)
                 ?? throw new UnauthorizedAccessException("No tienes acceso a ese box.");
 
-            return await EmitirTokensAsync(usuarioId, box, ct);
+            return await EmitirTokensAsync(usuarioId, box, acceso, ct);
         }
 
         private async Task<TokensResponse> EmitirTokensAsync(
@@ -159,15 +160,6 @@ namespace RxBox.Infrastructure.Auth
             await db.SaveChangesAsync(ct);   // token y bitácora juntos
 
             return new TokensResponse(accessToken, refreshToken, accessExpiraEn);
-        }
-
-        private async Task<TokensResponse> EmitirParaBoxAsync(
-            int usuarioId, Guid boxPublicId, AccionBitacora acceso, CancellationToken ct)
-        {
-            var box = await BoxesActivos(usuarioId).Where(ub => ub.Box.PublicId == boxPublicId).Select(ADeUsuario).FirstOrDefaultAsync(ct)
-                ?? throw new UnauthorizedAccessException("No tienes acceso a ese box.");
-
-            return await EmitirTokensAsync(usuarioId, box, acceso, ct);
         }
 
 

@@ -68,4 +68,12 @@ namespace RxBox.Core.Enums
         [Description("Cancelación")] CANCELACION
     }
 
+    /// <summary>Filtro del listado de personas. No se guarda: viene de es_atleta / es_coach.</summary>
+    public enum TipoPersona
+    {
+        ATLETA,
+        COACH
+    }
+
+
 }
