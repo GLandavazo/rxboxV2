@@ -37,6 +37,32 @@ namespace RxBox.API.Controllers
         public async Task<IActionResult> CambiarEstado(Guid publicId, CancellationToken ct) =>
             Ok(await service.CambiarEstadoAsync(publicId, ct));
 
+        #region Contacto de Emergencia
+
+        [HttpPost("{publicId:guid}/contactos")]
+        [Authorize(Roles = nameof(RolUsuario.ADMIN))]
+        public async Task<IActionResult> AgregarContacto(
+        Guid publicId, [FromBody] ContactoEmergenciaRequest request, CancellationToken ct)
+            {
+                var contacto = await service.AgregarContactoAsync(publicId, request, ct);
+                return CreatedAtAction(nameof(Obtener), new { publicId }, contacto);
+            }
+
+        [HttpPut("{publicId:guid}/contactos/{contactoPublicId:guid}")]
+        [Authorize(Roles = nameof(RolUsuario.ADMIN))]
+        public async Task<IActionResult> EditarContacto(
+            Guid publicId, Guid contactoPublicId, [FromBody] ContactoEmergenciaRequest request, CancellationToken ct) =>
+            Ok(await service.EditarContactoAsync(publicId, contactoPublicId, request, ct));
+
+        [HttpDelete("{publicId:guid}/contactos/{contactoPublicId:guid}")]
+        [Authorize(Roles = nameof(RolUsuario.ADMIN))]
+        public async Task<IActionResult> EliminarContacto(Guid publicId, Guid contactoPublicId, CancellationToken ct)
+        {
+            await service.EliminarContactoAsync(publicId, contactoPublicId, ct);
+            return NoContent();
+        }
+
+        #endregion
 
 
 

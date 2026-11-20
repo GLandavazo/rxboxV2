@@ -188,6 +188,54 @@ namespace RxBox.Infrastructure.Services.Personas
                 .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevocadoEn, DateTimeOffset.UtcNow), ct);
         }
 
+        #region Contacto de Emergencia
+        public async Task<ContactoEmergenciaResponse> AgregarContactoAsync(
+    Guid personaPublicId, ContactoEmergenciaRequest request, CancellationToken ct = default)
+        {
+            var persona = await ObtenerEntidadAsync(personaPublicId, ct);
+
+            var actuales = await Contactos.AsQueryable().CountAsync(c => c.PersonaId == persona.Id, ct);
+            if (actuales >= MaxContactos)
+                throw new ConflictException($"Una persona puede tener máximo {MaxContactos} contactos de emergencia.");
+
+            var contacto = NuevoContacto(persona.Id, request);
+            await Contactos.AddAsync(contacto, ct);
+            await uow.SaveAsync(ct);
+            return ContactoResponse(contacto);
+        }
+
+        public async Task<ContactoEmergenciaResponse> EditarContactoAsync(
+            Guid personaPublicId, Guid contactoPublicId, ContactoEmergenciaRequest request, CancellationToken ct = default)
+        {
+            var contacto = await ObtenerContactoAsync(personaPublicId, contactoPublicId, ct);
+            AplicarContacto(contacto, request);
+            await uow.SaveAsync(ct);
+            return ContactoResponse(contacto);
+        }
+
+        public async Task EliminarContactoAsync(Guid personaPublicId, Guid contactoPublicId, CancellationToken ct = default)
+        {
+            var contacto = await ObtenerContactoAsync(personaPublicId, contactoPublicId, ct);
+            Contactos.Remove(contacto);   // físico: la bitácora guarda lo que tenía (RN-001)
+            await uow.SaveAsync(ct);
+        }
+
+        /// <summary>El contacto debe ser de esa persona; si no, 404 (CA-002 de RF-CEM-002).</summary>
+        private async Task<ContactoEmergencia> ObtenerContactoAsync(Guid personaPublicId, Guid contactoPublicId, CancellationToken ct)
+        {
+            var persona = await ObtenerEntidadAsync(personaPublicId, ct);
+
+            return await Contactos.AsQueryable()
+                .FirstOrDefaultAsync(c => c.PublicId == contactoPublicId && c.PersonaId == persona.Id, ct)
+                ?? throw new NotFoundException("Contacto de emergencia", contactoPublicId);
+        }
+
+        private static ContactoEmergenciaResponse ContactoResponse(ContactoEmergencia c) =>
+            new(c.PublicId, c.Nombre, c.Parentesco, c.Telefono);
+
+
+        #endregion
+
 
     }
 }

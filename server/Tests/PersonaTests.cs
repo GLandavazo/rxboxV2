@@ -187,6 +187,29 @@ namespace RxBox.Tests
             Assert.True(await db.Personas.AsNoTracking().Where(p => p.Id == persona.Id).Select(p => p.Activo).SingleAsync());
         }
 
+        [Fact]
+        public async Task Contactos_maximo_tres_solo_de_su_persona_y_se_eliminan()
+        {
+            using var ctx = await ContextoAsync();
+            var ana = await ctx.Servicio.CrearAsync(new("Ana", "López", null, null,
+                Contactos: [new("A", null, "6620000001"), new("B", null, "6620000002")]));
+
+            var tercero = await ctx.Servicio.AgregarContactoAsync(ana.PublicId, new("C", "Hermana", "6620000003"));
+            await Assert.ThrowsAsync<ConflictException>(() =>
+                ctx.Servicio.AgregarContactoAsync(ana.PublicId, new("D", null, "6620000004")));
+
+            var editado = await ctx.Servicio.EditarContactoAsync(ana.PublicId, tercero.PublicId, new("Carla", "Hermana", "6620000033"));
+            Assert.Equal("Carla", editado.Nombre);
+
+            var beto = await ctx.Servicio.CrearAsync(new("Beto", "García", null, null));
+            await Assert.ThrowsAsync<NotFoundException>(() =>
+                ctx.Servicio.EditarContactoAsync(beto.PublicId, tercero.PublicId, new("X", null, "6620000000")));
+
+            await ctx.Servicio.EliminarContactoAsync(ana.PublicId, tercero.PublicId);
+            Assert.Equal(2, (await ctx.Servicio.ObtenerAsync(ana.PublicId)).Contactos.Count);
+        }
+
+
 
 
     }
