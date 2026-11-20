@@ -262,6 +262,25 @@
               }
             }
           ]
+        },
+        {
+          "name": "Sesión",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sesion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "sesion"
+              ]
+            },
+            "description": "Box actual y boxes a los que puede cambiar (RF-AUT-001)."
+          }
         }
       ]
     },

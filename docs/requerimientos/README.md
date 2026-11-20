@@ -20,9 +20,9 @@ Los módulos de operación (membresías, pagos, inscripciones) tienen sus propia
 
 | # | Módulo | Prefijo RF | Estado |
 |---|---|---|---|
-| 00 | [Transversal](00-transversal.md): bitácora, accesos, historial de membresías | RF-TRV | Definido |
-| 01 | [Catálogos](01-catalogos.md) (fijos y editables) | RF-CAF / RF-CAT | Construido (falta enums como texto en JSON; va en el paso 0 del 00) |
-| 02 | [Personas](02-personas.md) (atletas, coaches) y contactos de emergencia | RF-PER / RF-CEM | Definido |
+| 00 | [Transversal](00-transversal.md): bitácora, accesos, historial de membresías | RF-TRV | Construido |
+| 01 | [Catálogos](01-catalogos.md) (fijos y editables) | RF-CAF / RF-CAT | Construido |
+| 02 | [Personas](02-personas.md) (atletas, coaches) y contactos de emergencia | RF-PER / RF-CEM | Construido |
 | 03 | Tipos de membresía y restricciones | RF-TME | Por definir |
 | 04 | Membresías (venta, renovación, extensión, cancelación) | RF-MEM | Por definir |
 | 05 | Pagos | RF-PAG | Por definir |
@@ -30,6 +30,7 @@ Los módulos de operación (membresías, pagos, inscripciones) tienen sus propia
 | 07 | Inscripciones y check-in | RF-INS | Por definir |
 | 08 | Usuarios del box (accesos y roles) | RF-USU | Por definir |
 | 09 | Métricas de asistencia e ingresos | RF-MET | Por definir |
+| 10 | [Cliente base](10-cliente-base.md) (front: login, layout, catálogos, personas) | RF-AUT | Definido |
 
 Estados: Construido / Por ajustar / Por construir / Definido, sin fecha / Por definir.
 
