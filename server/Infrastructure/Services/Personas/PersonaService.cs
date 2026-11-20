@@ -11,6 +11,7 @@ using RxBox.Infrastructure.Data;
 using RxBox.Infrastructure.Services.Comun;
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace RxBox.Infrastructure.Services.Personas
@@ -73,5 +74,67 @@ namespace RxBox.Infrastructure.Services.Personas
         private async Task<Persona> ObtenerEntidadAsync(Guid publicId, CancellationToken ct) =>
             await Personas.GetByPublicIdAsync(publicId, ct)
                 ?? throw new NotFoundException("Persona", publicId);
+
+        public async Task<PersonaResponse> CrearAsync(PersonaCreateRequest request, CancellationToken ct = default)
+        {
+            var persona = new Persona { Codigo = await GenerarCodigoAsync(ct) };
+            AplicarDatos(persona, request.Nombre, request.Apellidos, request.Email, request.Telefono,
+                request.EsAtleta, request.EsCoach);
+
+            // Persona y contactos juntos o nada (CA-005). Los contactos necesitan persona.Id,
+            // que existe hasta el primer SaveAsync.
+            await using var tx = await uow.BeginTransactionAsync(ct);
+
+            await Personas.AddAsync(persona, ct);
+            await uow.SaveAsync(ct);
+
+            if (request.Contactos is { Count: > 0 })
+            {
+                foreach (var contacto in request.Contactos)
+                    await Contactos.AddAsync(NuevoContacto(persona.Id, contacto), ct);
+                await uow.SaveAsync(ct);
+            }
+
+            await tx.CommitAsync(ct);
+            return await ObtenerAsync(persona.PublicId, ct);
+        }
+
+        /// <summary>6 dígitos al azar, único en el box (el query filter limita la búsqueda al box).</summary>
+        private async Task<string> GenerarCodigoAsync(CancellationToken ct)
+        {
+            for (var intento = 0; intento < 10; intento++)
+            {
+                var codigo = RandomNumberGenerator.GetInt32(1_000_000).ToString("D6");
+                if (!await Personas.ExistsAsync(p => p.Codigo == codigo, ct)) return codigo;
+            }
+
+            // Con un millón de combinaciones solo pasa si el box tiene cientos de miles de personas.
+            throw new ConflictException("No se pudo generar un código único. Intenta de nuevo.");
+        }
+
+        private static void AplicarDatos(
+            Persona p, string nombre, string apellidos, string? email, string? telefono, bool esAtleta, bool esCoach)
+        {
+            p.Nombre = Texto.Normalizar(nombre);
+            p.Apellidos = Texto.Normalizar(apellidos);
+            p.Email = Texto.Opcional(email)?.ToLowerInvariant();
+            p.Telefono = Texto.Opcional(telefono);
+            p.EsAtleta = esAtleta;
+            p.EsCoach = esCoach;
+        }
+
+        private static ContactoEmergencia NuevoContacto(int personaId, ContactoEmergenciaRequest request)
+        {
+            var contacto = new ContactoEmergencia { PersonaId = personaId };
+            AplicarContacto(contacto, request);
+            return contacto;
+        }
+
+        private static void AplicarContacto(ContactoEmergencia c, ContactoEmergenciaRequest request)
+        {
+            c.Nombre = Texto.Normalizar(request.Nombre);
+            c.Parentesco = Texto.Opcional(request.Parentesco);
+            c.Telefono = request.Telefono.Trim();
+        }
     }
 }

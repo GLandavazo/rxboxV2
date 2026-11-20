@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RxBox.Core.DTOs.Requests.Personas;
+using RxBox.Core.Enums;
 using RxBox.Core.Interfaces;
 
 namespace RxBox.API.Controllers
@@ -17,5 +18,16 @@ namespace RxBox.API.Controllers
         [HttpGet("{publicId:guid}")]
         public async Task<IActionResult> Obtener(Guid publicId, CancellationToken ct) =>
             Ok(await service.ObtenerAsync(publicId, ct));
+
+        [HttpPost]
+        [Authorize(Roles = nameof(RolUsuario.ADMIN))]
+        public async Task<IActionResult> Crear([FromBody] PersonaCreateRequest request, CancellationToken ct)
+        {
+            var creada = await service.CrearAsync(request, ct);
+            return CreatedAtAction(nameof(Obtener), new { publicId = creada.PublicId }, creada);
+        }
+
+
+
     }
 }

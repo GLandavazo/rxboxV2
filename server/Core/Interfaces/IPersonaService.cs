@@ -8,5 +8,7 @@ namespace RxBox.Core.Interfaces
     {
         Task<PaginaResponse<PersonaListItemResponse>> ListarAsync(PersonaFiltroRequest filtro, CancellationToken ct = default);
         Task<PersonaResponse> ObtenerAsync(Guid publicId, CancellationToken ct = default);
+        Task<PersonaResponse> CrearAsync(PersonaCreateRequest request, CancellationToken ct = default);
+
     }
 }
