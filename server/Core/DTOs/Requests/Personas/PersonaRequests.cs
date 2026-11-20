@@ -45,4 +45,18 @@ namespace RxBox.Core.DTOs.Requests.Personas
         public TipoPersona? Tipo { get; set; }
         public bool SoloActivos { get; set; } = true;
     }
+
+    public record PersonaUpdateRequest(
+    [Required, StringLength(80)] string Nombre,
+    [Required, StringLength(120)] string Apellidos,
+    [EmailAddress, StringLength(150)] string? Email,
+    [RegularExpression(ReglasPersona.Telefono, ErrorMessage = ReglasPersona.TelefonoMensaje)] string? Telefono,
+    bool EsAtleta,
+    bool EsCoach)
+    : IValidatableObject
+    {
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) =>
+            ReglasPersona.ValidarRol(EsAtleta, EsCoach);
+    }
+
 }

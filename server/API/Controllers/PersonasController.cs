@@ -27,6 +27,18 @@ namespace RxBox.API.Controllers
             return CreatedAtAction(nameof(Obtener), new { publicId = creada.PublicId }, creada);
         }
 
+        [HttpPut("{publicId:guid}")]
+        [Authorize(Roles = nameof(RolUsuario.ADMIN))]
+        public async Task<IActionResult> Editar(Guid publicId, [FromBody] PersonaUpdateRequest request, CancellationToken ct) =>
+            Ok(await service.EditarAsync(publicId, request, ct));
+
+        [HttpPatch("{publicId:guid}/toggle")]
+        [Authorize(Roles = nameof(RolUsuario.ADMIN))]
+        public async Task<IActionResult> CambiarEstado(Guid publicId, CancellationToken ct) =>
+            Ok(await service.CambiarEstadoAsync(publicId, ct));
+
+
+
 
 
     }

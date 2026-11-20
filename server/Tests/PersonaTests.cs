@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using RxBox.Core.DTOs.Requests.Personas;
 using RxBox.Core.Entities;
 using RxBox.Core.Enums;
@@ -117,6 +118,76 @@ namespace RxBox.Tests
             Assert.Equal(2, coaches.TotalPaginas);
             Assert.Equal("García", coaches.Items[0].Apellidos);   // ordena por apellidos
         }
+
+        [Fact]
+        public async Task Editar_cambia_los_datos_pero_no_el_codigo()
+        {
+            using var ctx = await ContextoAsync();
+            var creada = await ctx.Servicio.CrearAsync(new("Ana", "López", null, null));
+
+            var editada = await ctx.Servicio.EditarAsync(creada.PublicId,
+                new("Ana María", "López", "ana@mail.com", null, EsAtleta: true, EsCoach: true));
+
+            Assert.Equal(creada.Codigo, editada.Codigo);
+            Assert.Equal("Ana María", editada.Nombre);
+            Assert.True(editada.EsCoach);
+        }
+
+        [Fact]
+        public async Task Desactivar_persona_con_acceso_le_quita_el_acceso_y_reactivar_no_lo_devuelve()
+        {
+            using var ctx = await ContextoAsync();
+            var otroAdmin = await factory.CrearUsuarioAsync(ctx.Box);
+            using (await factory.CrearClienteAsync(otroAdmin)) { }   // deja un refresh token vivo
+
+            var acceso = await ctx.Db.UsuarioBoxes.AsNoTracking()
+                .SingleAsync(ub => ub.UsuarioId == otroAdmin.Id && ub.BoxId == ctx.Box.Id);
+            var persona = await ctx.Db.Personas.AsNoTracking().SingleAsync(p => p.Id == acceso.PersonaId);
+
+            var desactivada = await ctx.Servicio.CambiarEstadoAsync(persona.PublicId);
+
+            Assert.False(desactivada.Activo);
+            Assert.False(await AccesoActivoAsync(ctx, acceso.Id));
+            Assert.False(await ctx.Db.RefreshTokens.AnyAsync(t => t.UsuarioId == otroAdmin.Id && t.RevocadoEn == null));
+
+            var reactivada = await ctx.Servicio.CambiarEstadoAsync(persona.PublicId);
+
+            Assert.True(reactivada.Activo);
+            Assert.False(await AccesoActivoAsync(ctx, acceso.Id));
+        }
+
+        private static Task<bool> AccesoActivoAsync(Contexto ctx, int usuarioBoxId) =>
+            ctx.Db.UsuarioBoxes.AsNoTracking().Where(ub => ub.Id == usuarioBoxId).Select(ub => ub.Activo).SingleAsync();
+
+        [Fact]
+        public async Task No_puedes_desactivarte_a_ti_mismo()
+        {
+            using var ctx = await ContextoAsync();
+            var acceso = await ctx.Db.UsuarioBoxes.AsNoTracking()
+                .SingleAsync(ub => ub.UsuarioId == ctx.Admin.Id && ub.BoxId == ctx.Box.Id);
+            var mia = await ctx.Db.Personas.AsNoTracking().SingleAsync(p => p.Id == acceso.PersonaId);
+
+            await Assert.ThrowsAsync<ConflictException>(() => ctx.Servicio.CambiarEstadoAsync(mia.PublicId));
+        }
+
+        [Fact]
+        public async Task No_se_puede_desactivar_al_unico_admin_y_no_queda_nada_a_medias()
+        {
+            var box = await factory.CrearBoxAsync();
+            var unicoAdmin = await factory.CrearUsuarioAsync(box);
+            var otro = await factory.CrearUsuarioAsync();   // sin acceso a este box: no es "uno mismo"
+            using var scope = factory.ScopeDeUsuario(otro.Id, box);
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var servicio = scope.ServiceProvider.GetRequiredService<IPersonaService>();
+
+            var acceso = await db.UsuarioBoxes.AsNoTracking().SingleAsync(ub => ub.UsuarioId == unicoAdmin.Id);
+            var persona = await db.Personas.AsNoTracking().SingleAsync(p => p.Id == acceso.PersonaId);
+
+            await Assert.ThrowsAsync<ConflictException>(() => servicio.CambiarEstadoAsync(persona.PublicId));
+            Assert.True(await db.Personas.AsNoTracking().Where(p => p.Id == persona.Id).Select(p => p.Activo).SingleAsync());
+        }
+
+
 
     }
 }

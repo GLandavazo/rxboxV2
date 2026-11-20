@@ -9,6 +9,10 @@ namespace RxBox.Core.Interfaces
         Task<PaginaResponse<PersonaListItemResponse>> ListarAsync(PersonaFiltroRequest filtro, CancellationToken ct = default);
         Task<PersonaResponse> ObtenerAsync(Guid publicId, CancellationToken ct = default);
         Task<PersonaResponse> CrearAsync(PersonaCreateRequest request, CancellationToken ct = default);
+        Task<PersonaResponse> EditarAsync(Guid publicId, PersonaUpdateRequest request, CancellationToken ct = default);
+        Task<PersonaResponse> CambiarEstadoAsync(Guid publicId, CancellationToken ct = default);
+
+
 
     }
 }

@@ -136,5 +136,58 @@ namespace RxBox.Infrastructure.Services.Personas
             c.Parentesco = Texto.Opcional(request.Parentesco);
             c.Telefono = request.Telefono.Trim();
         }
+
+        public async Task<PersonaResponse> EditarAsync(Guid publicId, PersonaUpdateRequest request, CancellationToken ct = default)
+        {
+            var persona = await ObtenerEntidadAsync(publicId, ct);   // rastreada; el código no se toca (RN-001)
+
+            AplicarDatos(persona, request.Nombre, request.Apellidos, request.Email, request.Telefono,
+                request.EsAtleta, request.EsCoach);
+
+            await uow.SaveAsync(ct);
+            return await ObtenerAsync(persona.PublicId, ct);
+        }
+
+        public async Task<PersonaResponse> CambiarEstadoAsync(Guid publicId, CancellationToken ct = default)
+        {
+            var persona = await ObtenerEntidadAsync(publicId, ct);
+
+            // Persona, acceso y tokens juntos. Si una validación lanza, el using deshace todo.
+            await using var tx = await uow.BeginTransactionAsync(ct);
+
+            if (persona.Activo) await QuitarAccesoAsync(persona, ct);
+            persona.Activo = !persona.Activo;   // reactivar NO devuelve el acceso (RN-002)
+
+            await uow.SaveAsync(ct);
+            await tx.CommitAsync(ct);
+            return await ObtenerAsync(persona.PublicId, ct);
+        }
+
+        private async Task QuitarAccesoAsync(Persona persona, CancellationToken ct)
+        {
+            var acceso = await db.UsuarioBoxes.FirstOrDefaultAsync(ub =>
+                ub.BoxId == persona.BoxId && ub.PersonaId == persona.Id && ub.Activo, ct);
+            if (acceso is null) return;
+
+            if (acceso.UsuarioId == currentUser.UsuarioId)
+                throw new ConflictException("No puedes desactivarte a ti mismo.");
+
+            if (acceso.Rol == RolUsuario.ADMIN)
+            {
+                var adminsActivos = await db.UsuarioBoxes.CountAsync(ub =>
+                    ub.BoxId == persona.BoxId && ub.Rol == RolUsuario.ADMIN && ub.Activo, ct);
+                if (adminsActivos <= 1)
+                    throw new ConflictException("No se puede desactivar al único administrador del box.");
+            }
+
+            acceso.Activo = false;   // rastreado: se guarda con la persona y queda en bitácora
+
+            // Corta sus sesiones en este box. El access token vigente dura hasta 15 min más.
+            await db.RefreshTokens
+                .Where(t => t.UsuarioId == acceso.UsuarioId && t.BoxId == acceso.BoxId && t.RevocadoEn == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevocadoEn, DateTimeOffset.UtcNow), ct);
+        }
+
+
     }
 }
